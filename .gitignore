@@ -1,0 +1,21 @@
+# Julia
+Manifest.toml
+docs/build/
+docs/Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# LLMWiki runtime state (not package code)
+.llmwiki/
+wiki/
+sources/
