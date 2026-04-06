@@ -145,6 +145,12 @@ function init_wiki(config::WikiConfig)
     end
 
     save_config(config)
+
+    # Initialise Git versioning if enabled
+    if config.versioned
+        git_init!(config)
+    end
+
     @info "Initialised LLMWiki" root = config.root
     nothing
 end

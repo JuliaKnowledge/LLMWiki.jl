@@ -19,6 +19,7 @@ makedocs(;
             "Compilation Pipeline" => "guide/compilation.md",
             "Search & Query" => "guide/search-query.md",
             "Extensions" => "guide/extensions.md",
+            "Versioning & Provenance" => "guide/versioning.md",
             "Architecture" => "guide/architecture.md",
         ],
         "API Reference" => [
