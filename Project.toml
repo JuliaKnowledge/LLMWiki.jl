@@ -15,6 +15,7 @@ JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 PDFIO = "4d0d745f-9d9a-592e-8d18-1ad8a0f42b92"
+RDFLib = "a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 StringDistances = "88034a9c-02f8-509d-84a9-84ec65e18404"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
@@ -22,7 +23,6 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [weakdeps]
 Mem0 = "111c52c1-a189-4018-bb23-b883ef531b41"
-RDFLib = "a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 
 [extensions]
@@ -37,13 +37,13 @@ DBInterface = "2.6.1"
 Gumbo = "0.8"
 HTTP = "1"
 JSON3 = "1"
+Mem0 = "0.1"
 PDFIO = "0.1"
+RDFLib = "0.1"
+SQLite = "1"
 StringDistances = "0.11"
 YAML = "0.4"
 julia = "1.9"
-Mem0 = "0.1"
-RDFLib = "0.1"
-SQLite = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

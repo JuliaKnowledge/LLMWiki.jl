@@ -84,6 +84,9 @@ export create_wiki_agent
 # Exports — Config
 export load_config, save_config, default_config, resolve_paths!
 
+# Exports — RDFLib extension stubs
+export wiki_to_rdf, sparql_wiki, export_rdf, validate_wiki_shacl, rdf_search, rdf_graph_stats
+
 # Extension stubs — overridden when extensions are loaded
 """
     semantic_search(config::WikiConfig, query::String; top_k::Int=10) -> Vector{SearchResult}
@@ -105,5 +108,53 @@ function load_state_sqlite end
 Save wiki state to SQLite. Requires `using LLMWiki, SQLite`.
 """
 function save_state_sqlite end
+
+"""
+    wiki_to_rdf(config::WikiConfig; include_provenance::Bool=true) -> RDFGraph
+
+Export the wiki as an RDF knowledge graph using SKOS, PROV, and Dublin Core
+vocabularies. Requires `using LLMWiki, RDFLib`.
+"""
+function wiki_to_rdf end
+
+"""
+    sparql_wiki(config::WikiConfig, query::String; include_provenance::Bool=true)
+
+Execute a SPARQL query against the wiki's RDF knowledge graph.
+Requires `using LLMWiki, RDFLib`.
+"""
+function sparql_wiki end
+
+"""
+    export_rdf(config::WikiConfig, path::String; format=TurtleFormat(), include_provenance::Bool=true)
+
+Serialize the wiki knowledge graph to a file in the given RDF format.
+Requires `using LLMWiki, RDFLib`.
+"""
+function export_rdf end
+
+"""
+    validate_wiki_shacl(config::WikiConfig) -> ValidationReport
+
+Validate the wiki knowledge graph against SHACL shapes.
+Requires `using LLMWiki, RDFLib`.
+"""
+function validate_wiki_shacl end
+
+"""
+    rdf_search(config::WikiConfig, query::String; top_k::Int=10) -> Vector{SearchResult}
+
+Search the wiki using SPARQL over the RDF knowledge graph.
+Requires `using LLMWiki, RDFLib`.
+"""
+function rdf_search end
+
+"""
+    rdf_graph_stats(config::WikiConfig) -> Dict{String, Any}
+
+Return statistics about the wiki RDF knowledge graph.
+Requires `using LLMWiki, RDFLib`.
+"""
+function rdf_graph_stats end
 
 end # module
