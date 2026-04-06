@@ -53,6 +53,9 @@ Base.@kwdef mutable struct WikiConfig
     # Search
     search_top_k::Int         = 10
     similarity_threshold::Float64 = 0.7
+
+    # Versioning
+    versioned::Bool           = true
 end
 
 # ── SourceEntry ──────────────────────────────────────────────────────────────
@@ -60,13 +63,16 @@ end
 """
     SourceEntry
 
-Per-source state entry that records the content hash and list of concepts
-extracted from a single source file.
+Per-source state entry that records the content hash, provenance metadata,
+and list of concepts extracted from a single source file.
 """
 Base.@kwdef mutable struct SourceEntry
     hash::String              = ""
     concepts::Vector{String}  = String[]
     compiled_at::String       = ""
+    source_url::Union{Nothing,String}  = nothing
+    source_type::String       = "file"   # "file", "web", "pdf"
+    original_file::Union{Nothing,String} = nothing  # for PDF: original .pdf path
 end
 
 # ── WikiState ────────────────────────────────────────────────────────────────

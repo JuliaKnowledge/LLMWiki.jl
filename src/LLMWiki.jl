@@ -59,6 +59,9 @@ include("query.jl")
 include("lint.jl")
 include("watch.jl")
 
+# Versioning
+include("versioning.jl")
+
 # AgentFramework integration
 include("agent.jl")
 
@@ -66,6 +69,7 @@ include("agent.jl")
 export WikiConfig, WikiState, SourceEntry, ExtractedConcept, PageMeta
 export ChangeStatus, NEW, CHANGED, UNCHANGED, DELETED
 export SearchResult, LintIssue, LintSeverity, INFO, WARNING, ERROR_SEVERITY
+export VersionEntry
 
 # Exports — Core operations
 export compile!, ingest!, query_wiki, lint_wiki, watch_wiki
@@ -83,6 +87,9 @@ export create_wiki_agent
 
 # Exports — Config
 export load_config, save_config, default_config, resolve_paths!
+
+# Exports — Versioning
+export git_init!, git_snapshot!, wiki_history, wiki_diff, wiki_log
 
 # Exports — RDFLib extension stubs
 export wiki_to_rdf, sparql_wiki, export_rdf, validate_wiki_shacl, rdf_search, rdf_graph_stats
