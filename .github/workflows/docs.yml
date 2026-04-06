@@ -19,16 +19,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: '1.11'
       - uses: julia-actions/cache@v2
       - name: Install dependencies
         run: |
           julia --project=docs -e '
             using Pkg
-            # Add unregistered dependencies from JuliaKnowledge org
-            Pkg.add(url="https://github.com/JuliaKnowledge/AgentFramework.jl")
-            Pkg.add(url="https://github.com/JuliaKnowledge/Mem0.jl")
-            Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - name: Build and deploy
         env:
