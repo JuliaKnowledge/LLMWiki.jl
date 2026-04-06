@@ -85,18 +85,141 @@ The SQLite database is stored at `.llmwiki/state.db` and contains tables:
 
 ## RDFLib.jl — Knowledge Graphs
 
-Planned integration with [RDFLib.jl](https://github.com/JuliaKnowledge/RDFLib.jl) for
-exporting the wiki as a knowledge graph.
+Exports the wiki as an RDF knowledge graph using standard vocabularies
+([SKOS](https://www.w3.org/2004/02/skos/), [PROV](https://www.w3.org/TR/prov-o/),
+[Dublin Core](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/)),
+enabling SPARQL queries, SHACL validation, and serialization to Turtle, JSON-LD,
+and other RDF formats.
 
-### Planned Features
+### Setup
 
-- Export wiki concepts as RDF triples (concepts as resources, wikilinks as predicates)
-- SPARQL queries over the wiki knowledge graph
-- PROV ontology for source provenance tracking
-- SHACL validation for wiki page schemas
+```julia
+using Pkg
+Pkg.add(url="https://github.com/JuliaKnowledge/RDFLib.jl")
 
-!!! note
-    The RDFLib extension is currently a stub. Check the repository for updates.
+using LLMWiki, RDFLib
+```
+
+### Ontology Mapping
+
+| Wiki concept | RDF representation |
+|:-------------|:-------------------|
+| Wiki page | `skos:Concept` |
+| Page title | `skos:prefLabel` |
+| Page summary | `skos:definition` |
+| Wikilink | `skos:related` |
+| Tag | `dcterms:subject` |
+| Source file | `prov:Entity` |
+| Source → concept | `prov:wasDerivedFrom` |
+| Compilation | `prov:Activity` |
+| Created date | `dcterms:created` |
+| Updated date | `dcterms:modified` |
+| Page type | Custom class under `skos:Concept` |
+
+### Export to RDF Graph
+
+```julia
+# Export as in-memory RDF graph
+g = wiki_to_rdf(config)
+
+# Without provenance triples
+g = wiki_to_rdf(config; include_provenance=false)
+```
+
+### SPARQL Queries
+
+```julia
+# Find all concept titles
+results = sparql_wiki(config, """
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?title WHERE {
+        ?c a skos:Concept .
+        ?c skos:prefLabel ?title .
+    }
+    ORDER BY ?title
+""")
+for row in results
+    println(row["title"].lexical)
+end
+
+# Provenance: which sources contributed to each concept?
+results = sparql_wiki(config, """
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?concept ?source WHERE {
+        ?c skos:prefLabel ?concept .
+        ?c prov:wasDerivedFrom ?s .
+        ?s rdfs:label ?source .
+    }
+""")
+
+# ASK queries return a Bool
+has_julia = sparql_wiki(config, """
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    ASK { ?c skos:prefLabel "Julia" }
+""")
+
+# CONSTRUCT queries return an RDFGraph
+subgraph = sparql_wiki(config, """
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    CONSTRUCT { ?c skos:prefLabel ?t }
+    WHERE { ?c a skos:Concept . ?c skos:prefLabel ?t }
+""")
+```
+
+### RDF Search
+
+Search using SPARQL substring matching on titles and summaries:
+
+```julia
+results = rdf_search(config, "dispatch")
+for r in results
+    println("$(r.title) (score=$(r.score))")
+end
+```
+
+### Serialize to File
+
+```julia
+# Turtle (default)
+export_rdf(config, "wiki.ttl")
+
+# N-Triples
+export_rdf(config, "wiki.nt"; format=NTriplesFormat())
+
+# JSON-LD
+export_rdf(config, "wiki.jsonld"; format=JSONLDFormat())
+
+# RDF/XML
+export_rdf(config, "wiki.rdf"; format=RDFXMLFormat())
+```
+
+### SHACL Validation
+
+Validate wiki structure against built-in SHACL shapes:
+
+```julia
+report = validate_wiki_shacl(config)
+println("Valid: ", report.conforms)
+for r in report.results
+    println("  Issue: ", r.message)
+end
+```
+
+The built-in shapes enforce:
+- Every concept must have exactly one `skos:prefLabel`
+- Every concept should have a `skos:definition` (warning)
+- `skos:related` targets must be `skos:Concept` instances
+- Timestamps must be `xsd:dateTime`
+
+### Graph Statistics
+
+```julia
+stats = rdf_graph_stats(config)
+# Dict with keys: "total_triples", "concepts", "sources",
+#                 "wikilinks", "orphans", "tags"
+```
 
 ## WikiAgent — AgentFramework.jl Integration
 
