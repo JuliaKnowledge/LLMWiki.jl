@@ -9,7 +9,9 @@ Feed raw sources — markdown files, PDFs, or web pages — into the wiki and an
 extracts concepts, generates encyclopedia-style articles, cross-links them with `[[wikilinks]]`,
 and keeps everything up to date as sources change.
 
-Built on [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl) for LLM orchestration.
+LLMWiki includes built-in provider clients for compilation/query workflows and an
+optional [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl)
+extension for interactive agents.
 
 ## Key Features
 
@@ -19,8 +21,8 @@ Built on [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl
 - **Bidirectional wikilinks** — automatic `[[wikilink]]` insertion with fuzzy title matching
 - **BM25 search** — full-text search over generated wiki pages
 - **Lint engine** — detects broken links, orphaned pages, empty content, stale references
-- **Multiple providers** — Ollama, OpenAI, Azure AI via AgentFramework.jl
-- **Interactive agent** — chat with your wiki using [`create_wiki_agent`](@ref)
+- **Multiple providers** — Ollama, OpenAI, Anthropic, and Azure OpenAI
+- **Interactive agent** — optional AgentFramework extension via [`create_wiki_agent`](@ref)
 - **Extensions** — optional [Mem0.jl](@ref extensions) (semantic search), [SQLite](@ref extensions) (state backend), [RDFLib.jl](@ref extensions) (knowledge graph)
 
 ## Quick Start
@@ -53,6 +55,7 @@ Pages = [
     "guide/compilation.md",
     "guide/search-query.md",
     "guide/extensions.md",
+    "guide/versioning.md",
     "guide/architecture.md",
     "api/types.md",
     "api/operations.md",

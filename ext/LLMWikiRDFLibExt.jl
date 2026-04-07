@@ -4,7 +4,33 @@ using LLMWiki
 using LLMWiki: JSON3, Dates, slugify, parse_frontmatter, find_wikilinks,
                WikiConfig, WikiState, PageMeta, PageType, CONCEPT, ENTITY,
                QUERY_PAGE, OVERVIEW, SearchResult, resolve_paths!
-using RDFLib
+
+const RDFLib = Base.root_module(
+    Base.PkgId(Base.UUID("a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a"), "RDFLib"),
+)
+const Namespace = RDFLib.Namespace
+const RDFGraph = RDFLib.RDFGraph
+const SKOS = RDFLib.SKOS
+const DCTERMS = RDFLib.DCTERMS
+const PROV = RDFLib.PROV
+const RDF = RDFLib.RDF
+const RDFS = RDFLib.RDFS
+const XSD = RDFLib.XSD
+const FOAF = RDFLib.FOAF
+const OWL = RDFLib.OWL
+const Triple = RDFLib.Triple
+const add! = RDFLib.add!
+const bind! = RDFLib.bind!
+const Literal = RDFLib.Literal
+const URIRef = RDFLib.URIRef
+const sparql_query = RDFLib.sparql_query
+const TurtleFormat = RDFLib.TurtleFormat
+const serialize = RDFLib.serialize
+const validate = RDFLib.validate
+const SH = RDFLib.SH
+const BNode = RDFLib.BNode
+const subjects = RDFLib.subjects
+const triples = RDFLib.triples
 
 # ── Namespace definitions ────────────────────────────────────────────────────
 

@@ -18,21 +18,13 @@ function generate_page(config::WikiConfig, entry::MergedConcept)
         entry.concept.concept, entry.combined_content, existing_page, related
     )
 
-    client = _create_chat_client(config)
-
-    messages = [
-        AgentFramework.Message(:system, prompt),
-        AgentFramework.Message(:user, "Write the wiki page for \"$(entry.concept.concept)\".")
-    ]
-
-    options = AgentFramework.ChatOptions(
-        model       = config.model,
-        temperature = 0.4,
-        max_tokens  = 4000
+    body = _chat_completion(
+        config,
+        prompt,
+        "Write the wiki page for \"$(entry.concept.concept)\".";
+        temperature=0.4,
+        max_tokens=4000,
     )
-
-    response = AgentFramework.get_response(client, messages, options)
-    body     = AgentFramework.get_text(response)
 
     # Build page with frontmatter
     now_str = Dates.format(Dates.now(), "yyyy-mm-ddTHH:MM:SS")

@@ -50,15 +50,12 @@ function ingest_pdf!(sources_path::String, filepath::String, base::String)
 
     text = extract_pdf_text(filepath)
 
-    content = """---
-title: $(splitext(base)[1])
-source_type: pdf
-source_file: $(basename(filepath))
-ingested_at: $(Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"))
----
-
-$text
-"""
+    content = _build_ingested_source_markdown(
+        text;
+        title=splitext(base)[1],
+        source_type="pdf",
+        source_file=basename(filepath),
+    )
 
     write(target, content)
     @info "Ingested PDF" source=filepath target=target_name chars=length(text)

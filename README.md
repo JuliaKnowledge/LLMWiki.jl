@@ -6,7 +6,9 @@ A Julia implementation of [Karpathy's LLM Wiki](https://gist.github.com/karpathy
 
 Feed raw sources (markdown, PDFs, web pages) into the wiki and an LLM automatically extracts concepts, generates encyclopedia-style articles, cross-links them with `[[wikilinks]]`, and keeps everything up to date as sources change.
 
-Built on [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl) for LLM orchestration.
+LLMWiki includes built-in provider clients for compilation/query workflows and an
+optional [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl)
+extension for interactive agents.
 
 ## Key Features
 
@@ -16,13 +18,15 @@ Built on [AgentFramework.jl](https://github.com/JuliaKnowledge/AgentFramework.jl
 - **Bidirectional wikilinks** — automatic `[[wikilink]]` insertion with fuzzy title matching
 - **BM25 search** — full-text search over generated wiki pages
 - **Lint engine** — detects broken links, orphaned pages, empty content, stale references
-- **Multiple providers** — Ollama, OpenAI, Azure AI via AgentFramework.jl
-- **Interactive agent** — chat with your wiki using `create_wiki_agent()`
+- **Multiple providers** — Ollama, OpenAI, Anthropic, and Azure OpenAI
+- **Interactive agent** — optional AgentFramework extension via `create_wiki_agent()`
 - **Extensions** — optional Mem0.jl (semantic search), SQLite (state backend), RDFLib.jl (knowledge graph)
 
 ## Quick Start
 
 ### Installation
+
+LLMWiki currently targets **Julia 1.11+**.
 
 ```julia
 using Pkg
@@ -60,7 +64,7 @@ my-wiki/
 │   └── log.md          # Operation log
 └── .llmwiki/
     ├── config.yaml     # Wiki configuration
-    └── state.json      # Compilation state
+    └── state.json      # Compilation state (or state.db when using SQLite)
 ```
 
 ### Add Sources
@@ -119,10 +123,13 @@ for issue in issues
 end
 ```
 
-### Interactive Agent
+### Interactive Agent (Optional)
 
 ```julia
-using AgentFramework
+using Pkg
+Pkg.add(url="https://github.com/JuliaKnowledge/AgentFramework.jl")
+
+using LLMWiki, AgentFramework
 
 agent = create_wiki_agent(config)
 # The agent has tools for searching, querying, compiling, and ingesting
@@ -137,7 +144,7 @@ config = default_config("my-wiki")
 
 # LLM settings
 config.model = "qwen3:8b"          # Model name
-config.provider = :ollama           # :ollama, :openai, :azure
+config.provider = :ollama          # :ollama, :openai, :anthropic, :azure
 config.api_url = "http://localhost:11434"  # Provider URL (nil = default)
 
 # Compilation
@@ -147,6 +154,9 @@ config.max_related_pages = 5        # Related pages loaded for context
 # Search
 config.search_top_k = 10            # Default results per search
 config.similarity_threshold = 0.7   # Semantic search threshold
+
+# State backend
+config.state_backend = :json        # :json (default) or :sqlite
 ```
 
 ## Architecture
@@ -178,7 +188,18 @@ results = search_wiki(config, "memory safety"; method=:semantic)
 
 ```julia
 using LLMWiki, SQLite
-# State is automatically persisted to SQLite when the extension loads
+
+config.state_backend = :sqlite
+save_config(config)  # optional, persists the backend choice to config.yaml
+```
+
+### Azure OpenAI
+
+```julia
+config.provider = :azure
+config.model = "my-deployment-name"
+config.api_url = "https://your-resource.openai.azure.com"
+# Set AZURE_OPENAI_API_KEY
 ```
 
 ## API Reference
@@ -213,7 +234,7 @@ using LLMWiki, SQLite
 | `write_frontmatter(meta, body)` | Serialize page with frontmatter |
 | `slugify(title)` | Convert title to URL-safe slug |
 | `detect_changes(config, state)` | Find changed source files |
-| `create_wiki_agent(config)` | Create interactive AgentFramework agent |
+| `create_wiki_agent(config)` | Create the optional AgentFramework wiki agent |
 
 ## License
 

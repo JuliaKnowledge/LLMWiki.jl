@@ -50,12 +50,16 @@ using LLMWiki
             cfg = default_config(dir)
             cfg.model = "custom-model"
             cfg.search_top_k = 20
+            cfg.versioned = false
+            cfg.state_backend = :sqlite
             init_wiki(cfg)
             save_config(cfg)
 
             cfg2 = load_config(dir)
             @test cfg2.model == "custom-model"
             @test cfg2.search_top_k == 20
+            @test cfg2.versioned == false
+            @test cfg2.state_backend == :sqlite
         end
     end
 

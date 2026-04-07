@@ -10,11 +10,45 @@ Returns the parsed `PageMeta` and the remaining body text.
 If no frontmatter is found, returns a default `PageMeta` with `title=""` and the full content as body.
 """
 function parse_frontmatter(content::String)
+    yaml_str, body = _split_frontmatter(content)
+    yaml_str === nothing && return (PageMeta(title=""), body)
+
+    meta = _yaml_to_pagemeta(yaml_str)
+    return (meta, body)
+end
+
+"""
+    parse_frontmatter_data(content::String) -> Dict{String,Any}
+
+Parse raw YAML frontmatter into a string-keyed dictionary.
+Returns an empty dictionary when the content has no frontmatter or the YAML is invalid.
+"""
+function parse_frontmatter_data(content::String)::Dict{String,Any}
+    yaml_str, _ = _split_frontmatter(content)
+    yaml_str === nothing && return Dict{String,Any}()
+
+    data = try
+        YAML.load(yaml_str)
+    catch
+        Dict{String,Any}()
+    end
+
+    data isa AbstractDict || return Dict{String,Any}()
+    return Dict{String,Any}(string(k) => v for (k, v) in pairs(data))
+end
+
+"""
+    _split_frontmatter(content::String) -> Tuple{Union{Nothing,String},String}
+
+Split a Markdown document into its raw YAML frontmatter string and body.
+Returns `(nothing, content)` when no valid frontmatter block is present.
+"""
+function _split_frontmatter(content::String)
     lines = split(content, '\n')
 
     # Must start with ---
     if isempty(lines) || strip(lines[1]) != FRONTMATTER_DELIMITER
-        return (PageMeta(title=""), content)
+        return (nothing, content)
     end
 
     # Find closing ---
@@ -27,16 +61,13 @@ function parse_frontmatter(content::String)
     end
 
     if closing == 0
-        return (PageMeta(title=""), content)
+        return (nothing, content)
     end
 
     yaml_str = join(lines[2:closing-1], '\n')
     body = join(lines[closing+1:end], '\n')
     body = lstrip(body, '\n')
-
-    # Parse YAML
-    meta = _yaml_to_pagemeta(yaml_str)
-    return (meta, body)
+    return (yaml_str, body)
 end
 
 """

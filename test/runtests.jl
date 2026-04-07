@@ -10,6 +10,9 @@ using LLMWiki
     include("test_hasher.jl")
     include("test_ingest.jl")
     include("test_search.jl")
+    include("test_extensions.jl")
     include("test_lint.jl")
     include("test_log.jl")
+    include("test_versioning.jl")
+    include("test_rdflib_ext.jl")
 end

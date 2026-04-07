@@ -74,6 +74,8 @@ function load_config(root::String=".")
         try
             if ft === Symbol
                 setfield!(cfg, sym, Symbol(val))
+            elseif ft === Bool
+                setfield!(cfg, sym, Bool(val))
             elseif ft === Int
                 setfield!(cfg, sym, Int(val))
             elseif ft === Float64
@@ -88,9 +90,7 @@ function load_config(root::String=".")
         end
     end
 
-    # Re-resolve derived paths that depend on root
-    cfg.root = abspath(cfg.root)
-    cfg
+    resolve_paths!(cfg)
 end
 
 """

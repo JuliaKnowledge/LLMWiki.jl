@@ -60,11 +60,14 @@ using Pkg
 Pkg.add("SQLite")
 
 using LLMWiki, SQLite
+
+config.state_backend = :sqlite
+save_config(config)  # optional
 ```
 
 ### What Changes
 
-When loaded, the extension provides:
+When `config.state_backend == :sqlite`, the extension provides:
 
 - `load_state_sqlite(config)` — Load [`WikiState`](@ref) from `state.db`
 - `save_state_sqlite(config, state)` — Persist state to `state.db`
@@ -73,7 +76,7 @@ The SQLite database is stored at `.llmwiki/state.db` and contains tables:
 
 | Table | Purpose |
 |:------|:--------|
-| `sources` | Per-file hash, concepts list, and compilation timestamp |
+| `sources` | Per-file hash, concepts list, compilation timestamp, and provenance metadata |
 | `wiki_meta` | Key-value metadata (index hash, version) |
 | `frozen_slugs` | Slugs shared between deleted and surviving sources |
 
@@ -223,10 +226,15 @@ stats = rdf_graph_stats(config)
 
 ## WikiAgent — AgentFramework.jl Integration
 
-LLMWiki includes a built-in agent that wraps wiki operations as tools for an
-LLM-powered conversational interface.
+LLMWiki provides an optional AgentFramework extension that wraps wiki operations
+as tools for an LLM-powered conversational interface.
+
+### Setup
 
 ```julia
+using Pkg
+Pkg.add(url="https://github.com/JuliaKnowledge/AgentFramework.jl")
+
 using LLMWiki, AgentFramework
 
 config = load_config("my-wiki")

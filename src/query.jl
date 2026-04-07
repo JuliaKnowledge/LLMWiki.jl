@@ -31,10 +31,8 @@ function query_wiki(config::WikiConfig, question::String;
         return "No wiki index found. Run `compile!` first to build the wiki."
     end
 
-    client = _create_chat_client(config)
-
     # Step 1: Page selection
-    selected_slugs = _select_pages(client, config, question, index_content)
+    selected_slugs = _select_pages(config, question, index_content)
 
     if isempty(selected_slugs)
         return "I couldn't find any relevant wiki pages for this question. " *
@@ -48,7 +46,7 @@ function query_wiki(config::WikiConfig, question::String;
     end
 
     # Step 3: Generate answer
-    answer = _generate_answer(client, config, question, page_contents)
+    answer = _generate_answer(config, question, page_contents)
 
     # Optionally save as a query page
     if save
@@ -65,24 +63,18 @@ end
 Ask the LLM to select the most relevant page slugs for a question,
 given the wiki index.
 """
-function _select_pages(client, config::WikiConfig, question::String,
+function _select_pages(config::WikiConfig, question::String,
                        index_content::String)::Vector{String}
     prompt = page_selection_prompt(question, index_content,
                                    config.query_page_limit)
 
-    messages = [
-        AgentFramework.Message(:system, prompt),
-        AgentFramework.Message(:user, question)
-    ]
-
-    options = AgentFramework.ChatOptions(
-        model       = config.model,
-        temperature = 0.2,
-        max_tokens  = 1000
+    text = _chat_completion(
+        config,
+        prompt,
+        question;
+        temperature=0.2,
+        max_tokens=1000,
     )
-
-    response = AgentFramework.get_response(client, messages, options)
-    text = AgentFramework.get_text(response)
 
     _parse_selected_slugs(text, config)
 end
@@ -186,23 +178,17 @@ end
 
 Ask the LLM to synthesise an answer from the loaded wiki pages.
 """
-function _generate_answer(client, config::WikiConfig, question::String,
+function _generate_answer(config::WikiConfig, question::String,
                           page_contents::String)::String
     prompt = answer_generation_prompt(question, page_contents)
 
-    messages = [
-        AgentFramework.Message(:system, prompt),
-        AgentFramework.Message(:user, question)
-    ]
-
-    options = AgentFramework.ChatOptions(
-        model       = config.model,
-        temperature = 0.3,
-        max_tokens  = 4000
+    _chat_completion(
+        config,
+        prompt,
+        question;
+        temperature=0.3,
+        max_tokens=4000,
     )
-
-    response = AgentFramework.get_response(client, messages, options)
-    AgentFramework.get_text(response)
 end
 
 """
@@ -214,7 +200,7 @@ function _save_query_page(config::WikiConfig, question::String,
                           answer::String, slugs::Vector{String})
     slug = slugify(question)
     if length(slug) > 60
-        slug = slug[1:60]
+        slug = strip(slug[1:60], '-')
     end
 
     now_str = Dates.format(Dates.now(), "yyyy-mm-ddTHH:MM:SS")

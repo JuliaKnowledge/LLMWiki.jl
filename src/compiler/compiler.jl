@@ -159,17 +159,10 @@ function _compile_inner!(config::WikiConfig; force::Bool)
         concept_slugs = [slugify(c.concept) for c in ext.concepts]
 
         # Extract provenance from ingested source frontmatter
-        source_url = nothing
-        source_type = "file"
-        original_file = nothing
-        try
-            fm_data = YAML.load(match(r"^---\s*\n(.*?)\n---"s, ext.source_content))
-            if fm_data isa Dict
-                source_url = get(fm_data, "source_url", nothing)
-                source_type = get(fm_data, "source_type", "file")
-                original_file = get(fm_data, "source_file", nothing)
-            end
-        catch; end
+        fm_data = parse_frontmatter_data(ext.source_content)
+        source_url = get(fm_data, "source_url", nothing)
+        source_type = get(fm_data, "source_type", "file")
+        original_file = get(fm_data, "source_file", nothing)
 
         state.sources[ext.source_file] = SourceEntry(
             hash          = hash_file(joinpath(config.root, config.sources_dir, ext.source_file)),
@@ -200,7 +193,8 @@ function _compile_inner!(config::WikiConfig; force::Bool)
 
     # Step 11: Log and save
     compiled = length(generated_slugs)
-    skipped  = length(unchanged_list) - length(affected_files) - length(late_affected)
+    reprocessed_unchanged = union(Set(affected_files), Set(late_affected))
+    skipped  = length(unchanged_list) - length(reprocessed_unchanged)
     skipped  = max(skipped, 0)
     deleted  = length(deleted_list)
 
@@ -216,7 +210,7 @@ function _compile_inner!(config::WikiConfig; force::Bool)
     if config.versioned && _has_git(config) && compiled + deleted > 0
         src_list = join(sources_to_extract, ", ")
         msg = "Compile: $compiled pages, $deleted deleted\n\nSources: $src_list"
-        git_snapshot!(config, msg; author="LLMWiki Compiler <llmwiki@localhost>")
+        git_snapshot!(config, msg; author="LLMWiki Compiler <sdwfrost@users.noreply.github.com>")
     end
 
     @info "Compilation complete" compiled=compiled skipped=skipped deleted=deleted

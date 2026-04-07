@@ -15,8 +15,9 @@ LLMWiki is configured through the [`WikiConfig`](@ref) struct, which can be set 
 | `log_file` | `String` | `"wiki/log.md"` | Path to the operation log |
 | `state_dir` | `String` | `".llmwiki"` | Directory for state and config files |
 | `state_file` | `String` | `".llmwiki/state.json"` | Path to the compilation state file |
+| `state_backend` | `Symbol` | `:json` | State backend (`:json` or `:sqlite`) |
 | `model` | `String` | `"qwen3:8b"` | LLM model name |
-| `provider` | `Symbol` | `:ollama` | LLM provider (`:ollama`, `:openai`, `:azure`) |
+| `provider` | `Symbol` | `:ollama` | LLM provider (`:ollama`, `:openai`, `:anthropic`, `:azure`) |
 | `embedding_model` | `String` | `"nomic-embed-text"` | Model for semantic embeddings |
 | `api_url` | `Union{Nothing,String}` | `nothing` | Custom API URL (`nothing` = provider default) |
 | `max_concepts_per_source` | `Int` | `8` | Maximum concepts extracted per source |
@@ -25,6 +26,7 @@ LLMWiki is configured through the [`WikiConfig`](@ref) struct, which can be set 
 | `query_page_limit` | `Int` | `8` | Max pages selected per query |
 | `search_top_k` | `Int` | `10` | Default number of search results |
 | `similarity_threshold` | `Float64` | `0.7` | Minimum similarity for semantic search |
+| `versioned` | `Bool` | `true` | Enable git-backed wiki snapshots after compilation |
 
 ## Programmatic Configuration
 
@@ -45,6 +47,10 @@ config.max_related_pages = 8
 # Search
 config.search_top_k = 20
 config.similarity_threshold = 0.8
+
+# State/versioning
+config.state_backend = :json
+config.versioned = true
 
 # Persist to disk
 save_config(config)
@@ -92,9 +98,9 @@ config.embedding_model = "text-embedding-3-small"
 
 ```julia
 config.provider = :azure
-config.model = "gpt-4o"
+config.model = "my-deployment-name"
 config.api_url = "https://your-resource.openai.azure.com/"
-# Set AZURE_OPENAI_API_KEY environment variable
+# Set AZURE_OPENAI_API_KEY
 ```
 
 ## Directory Layout
@@ -118,7 +124,8 @@ my-wiki/                       # config.root
 │   └── log.md                 # config.log_file — operation log
 └── .llmwiki/                  # config.state_dir — internal state
     ├── config.yaml            # persisted configuration
-    ├── state.json             # compilation state (source hashes, concepts)
+    ├── state.json             # compilation state when state_backend = :json
+    ├── state.db               # compilation state when state_backend = :sqlite
     └── lock                   # filesystem lock during compilation
 ```
 

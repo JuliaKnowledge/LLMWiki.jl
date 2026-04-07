@@ -42,3 +42,29 @@ Ingest multiple sources. Returns a list of ingested filenames.
 function ingest_batch!(config::WikiConfig, paths::Vector{String})
     return [ingest!(config, p) for p in paths]
 end
+
+function _build_ingested_source_markdown(body::AbstractString;
+                                         title::String="",
+                                         source_type::String="file",
+                                         source_url::Union{Nothing,String}=nothing,
+                                         source_file::Union{Nothing,String}=nothing)
+    lines = String[
+        "---",
+        "title: \"$(escape_yaml_string(title))\"",
+        "source_type: \"$(escape_yaml_string(source_type))\"",
+    ]
+
+    if source_url !== nothing
+        push!(lines, "source_url: \"$(escape_yaml_string(source_url))\"")
+    end
+    if source_file !== nothing
+        push!(lines, "source_file: \"$(escape_yaml_string(source_file))\"")
+    end
+
+    push!(lines, "ingested_at: \"$(Dates.format(Dates.now(), "yyyy-mm-ddTHH:MM:SS"))\"")
+    push!(lines, "---")
+    push!(lines, "")
+    push!(lines, String(body))
+
+    return join(lines, '\n')
+end

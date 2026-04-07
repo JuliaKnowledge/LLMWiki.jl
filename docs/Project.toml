@@ -3,8 +3,10 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 LLMWiki = "c7e3a2f1-9b4d-4e8c-a1f5-6d3b2c8e9a7f"
 AgentFramework = "8d84e483-4b84-4e3c-9ca2-3749d621083b"
 Mem0 = "111c52c1-a189-4018-bb23-b883ef531b41"
+RDFLib = "a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a"
 
 [sources]
 LLMWiki = {path = ".."}
 AgentFramework = {url = "https://github.com/JuliaKnowledge/AgentFramework.jl"}
 Mem0 = {url = "https://github.com/JuliaKnowledge/Mem0.jl"}
+RDFLib = {url = "https://github.com/JuliaKnowledge/RDFLib.jl"}

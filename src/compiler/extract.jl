@@ -5,28 +5,19 @@
 """
     extract_concepts(config::WikiConfig, source_content::String, existing_index::String) -> Vector{ExtractedConcept}
 
-Use AgentFramework.jl to extract concepts from a source document via
+Use the configured LLM provider to extract concepts from a source document via
 structured JSON output.
 """
 function extract_concepts(config::WikiConfig, source_content::String, existing_index::String)
     prompt = extraction_system_prompt(source_content, existing_index)
 
-    client = _create_chat_client(config)
-
-    messages = [
-        AgentFramework.Message(:system, prompt),
-        AgentFramework.Message(:user, "Extract the key concepts from this source.")
-    ]
-
-    options = AgentFramework.ChatOptions(
-        model=config.model,
+    text = _chat_completion(
+        config,
+        prompt,
+        "Extract the key concepts from this source.";
         temperature=0.3,
-        max_tokens=2000
+        max_tokens=2000,
     )
-
-    response = AgentFramework.get_response(client, messages, options)
-
-    text = AgentFramework.get_text(response)
     return _parse_concepts(text)
 end
 
@@ -100,26 +91,6 @@ function extract_for_source(config::WikiConfig, source_file::String)
         source_content = source_content,
         concepts       = concepts
     )
-end
-
-# ── Chat client factory ──────────────────────────────────────────────────────
-
-"""
-    _create_chat_client(config::WikiConfig) -> AgentFramework.AbstractChatClient
-
-Create an AgentFramework chat client based on the wiki configuration.
-"""
-function _create_chat_client(config::WikiConfig)
-    if config.provider == :ollama
-        url = something(config.api_url, "http://localhost:11434")
-        return AgentFramework.OllamaChatClient(model=config.model, base_url=url)
-    elseif config.provider == :openai
-        return AgentFramework.OpenAIChatClient(model=config.model)
-    elseif config.provider == :anthropic
-        return AgentFramework.AnthropicChatClient(model=config.model)
-    else
-        error("Unknown LLM provider: $(config.provider)")
-    end
 end
 
 # ── JSON parsing helpers ─────────────────────────────────────────────────────

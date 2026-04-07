@@ -111,15 +111,15 @@ The [`lint_wiki`](@ref) function performs structural health checks:
 
 ```
 LLMWiki.jl
-├── AgentFramework.jl  — LLM chat client and agent framework
+├── HTTP.jl            — LLM provider and web ingestion requests
 ├── JSON3.jl           — State serialization
 ├── YAML.jl            — Config and frontmatter parsing
 ├── SHA.jl             — Change detection hashing
-├── HTTP.jl            — Web page ingestion
 ├── Gumbo.jl           — HTML parsing
 ├── Cascadia.jl        — CSS selectors for HTML
 ├── PDFIO.jl           — PDF text extraction
 ├── StringDistances.jl — Fuzzy title matching
+└── AgentFramework.jl  — Optional interactive-agent extension
 ├── FileWatching.jl    — File change monitoring
 ├── Dates.jl           — Timestamps
 └── UUIDs.jl           — Unique identifiers
