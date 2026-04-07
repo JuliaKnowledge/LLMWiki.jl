@@ -9,6 +9,8 @@
 #   - Per-page history and diffs
 #   - Agent-attributed authorship on commits
 
+const DEFAULT_WIKI_GIT_AUTHOR = "LLMWiki Compiler <sdwfrost@users.noreply.github.com>"
+
 # ── Git detection and initialisation ─────────────────────────────────────────
 
 """
@@ -41,7 +43,7 @@ function git_init!(config::WikiConfig)
     _git(wiki_dir, ["add", "-A"])
     if _has_staged_changes(wiki_dir)
         _git(wiki_dir, ["commit", "-q", "-m", "Initialise LLMWiki",
-             "--author", "LLMWiki <llmwiki@localhost>"])
+             "--author", DEFAULT_WIKI_GIT_AUTHOR])
     end
 
     @info "Initialised Git versioning" path=wiki_dir
@@ -61,7 +63,7 @@ end
 
 """
     git_snapshot!(config::WikiConfig, message::String;
-                  author::String="LLMWiki Compiler <llmwiki@localhost>") -> Union{String, Nothing}
+                  author::String=DEFAULT_WIKI_GIT_AUTHOR) -> Union{String, Nothing}
 
 Stage all changes in the wiki directory and create a single atomic commit.
 Returns the commit hash, or `nothing` if there were no changes to commit.
@@ -71,7 +73,7 @@ creations, updates, and deletions into one commit — avoiding repository
 pollution from intermediate steps.
 """
 function git_snapshot!(config::WikiConfig, message::String;
-                       author::String="LLMWiki Compiler <llmwiki@localhost>")
+                       author::String=DEFAULT_WIKI_GIT_AUTHOR)
     _has_git(config) || return nothing
 
     wiki_dir = config.wiki_dir

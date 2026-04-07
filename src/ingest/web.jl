@@ -35,15 +35,12 @@ function ingest_web!(config::WikiConfig, url::String;
 
     target = joinpath(sources_path, target_name)
 
-    content = """---
-title: $title
-source_type: web
-source_url: $url
-ingested_at: $(Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"))
----
-
-$text
-"""
+    content = _build_ingested_source_markdown(
+        text;
+        title=title,
+        source_type="web",
+        source_url=url,
+    )
 
     write(target, content)
     @info "Ingested URL" url=url target=target_name chars=length(text)
@@ -271,5 +268,5 @@ function url_to_slug(url::String)
     if length(slug) > 60
         slug = slug[1:60]
     end
-    return slug
+    return strip(slug, '-')
 end

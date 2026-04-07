@@ -93,4 +93,23 @@ using LLMWiki
             end
         end
     end
+
+    @testset "_build_ingested_source_markdown escapes YAML-sensitive fields" begin
+        content = LLMWiki._build_ingested_source_markdown(
+            "Body text";
+            title="Rust: The Book",
+            source_type="web",
+            source_url="https://example.com/article?x=1&y=2",
+            source_file="original:file.pdf",
+        )
+
+        meta, body = parse_frontmatter(content)
+        raw = LLMWiki.parse_frontmatter_data(content)
+
+        @test meta.title == "Rust: The Book"
+        @test body == "Body text"
+        @test raw["source_type"] == "web"
+        @test raw["source_url"] == "https://example.com/article?x=1&y=2"
+        @test raw["source_file"] == "original:file.pdf"
+    end
 end

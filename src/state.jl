@@ -10,10 +10,18 @@ const LOCK_FILENAME = "lock"
 """
     load_state(config::WikiConfig) -> WikiState
 
-Read the wiki state from `config.state_file`.  Returns an empty `WikiState`
+    Read the wiki state from `config.state_file`.  Returns an empty `WikiState`
 if the file does not exist or cannot be parsed.
 """
 function load_state(config::WikiConfig)::WikiState
+    resolve_paths!(config)
+    if config.state_backend == :sqlite
+        hasmethod(load_state_sqlite, Tuple{WikiConfig}) || error(
+            "SQLite state backend requires `using LLMWiki, SQLite` before loading state.",
+        )
+        return load_state_sqlite(config)
+    end
+
     path = config.state_file
     isfile(path) || return WikiState()
 
@@ -30,10 +38,19 @@ end
 """
     save_state(config::WikiConfig, state::WikiState)
 
-Persist `state` to `config.state_file` atomically (write to a temporary
+    Persist `state` to `config.state_file` atomically (write to a temporary
 file then rename).
 """
 function save_state(config::WikiConfig, state::WikiState)
+    resolve_paths!(config)
+    if config.state_backend == :sqlite
+        hasmethod(save_state_sqlite, Tuple{WikiConfig, WikiState}) || error(
+            "SQLite state backend requires `using LLMWiki, SQLite` before saving state.",
+        )
+        save_state_sqlite(config, state)
+        return nothing
+    end
+
     mkpath(dirname(config.state_file))
     tmp = config.state_file * ".tmp"
     try

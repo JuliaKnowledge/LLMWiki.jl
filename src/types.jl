@@ -35,6 +35,7 @@ Base.@kwdef mutable struct WikiConfig
     log_file::String          = "wiki/log.md"
     state_dir::String         = ".llmwiki"
     state_file::String        = ".llmwiki/state.json"
+    state_backend::Symbol     = :json
 
     # LLM provider
     model::String             = "qwen3:8b"

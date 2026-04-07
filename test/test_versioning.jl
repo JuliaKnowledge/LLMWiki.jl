@@ -60,7 +60,7 @@ using LLMWiki
         init_wiki(config)
 
         write(joinpath(dir, config.concepts_dir, "a.md"), "# A")
-        git_snapshot!(config, "Custom author"; author="Alice <alice@example.com>")
+        git_snapshot!(config, "Custom author"; author="Alice <sdwfrost@users.noreply.github.com>")
 
         hist = wiki_log(config; limit=1)
         @test length(hist) >= 1
@@ -208,10 +208,10 @@ using LLMWiki
     end
 
     @testset "VersionEntry fields" begin
-        e = LLMWiki.VersionEntry(hash="abc123", author="Test <t@t>",
+        e = LLMWiki.VersionEntry(hash="abc123", author="Test <sdwfrost@users.noreply.github.com>",
                                   date="2026-01-01", message="test")
         @test e.hash == "abc123"
-        @test e.author == "Test <t@t>"
+        @test e.author == "Test <sdwfrost@users.noreply.github.com>"
         @test e.date == "2026-01-01"
         @test e.message == "test"
     end

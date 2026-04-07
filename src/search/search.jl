@@ -50,6 +50,10 @@ Semantic search stub.  Returns empty results unless the Mem0 extension
 is loaded (which overrides this method).
 """
 function _search_semantic(config::WikiConfig, query::String; top_k::Int)::Vector{SearchResult}
+    if hasmethod(semantic_search, Tuple{WikiConfig, String})
+        return semantic_search(config, query; top_k=top_k)
+    end
+
     @warn "Semantic search requires the Mem0 extension (add Mem0.jl to your project)"
     SearchResult[]
 end
