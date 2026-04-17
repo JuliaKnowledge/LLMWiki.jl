@@ -63,6 +63,9 @@ include("watch.jl")
 # Versioning
 include("versioning.jl")
 
+# CLI (Comonicon) — loaded last; uses public API above.
+include("cli.jl")
+
 # Exports — Types
 export WikiConfig, WikiState, SourceEntry, ExtractedConcept, PageMeta
 export ChangeStatus, NEW, CHANGED, UNCHANGED, DELETED
