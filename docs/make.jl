@@ -29,6 +29,7 @@ makedocs(;
         ],
     ],
     warnonly = [:missing_docs, :cross_references, :docs_block],
+    checkdocs = :exports,
 )
 
 deploydocs(;
