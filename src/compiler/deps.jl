@@ -36,6 +36,80 @@ function build_concept_to_sources_map(sources::Dict{String,SourceEntry})::Dict{S
 end
 
 """
+    extracted_concept_slugs(result::ExtractionResult) -> Set{String}
+
+Normalize one extraction result to the set of concept slugs it produced.
+"""
+function extracted_concept_slugs(result::ExtractionResult)::Set{String}
+    Set{String}(slugify(concept.concept) for concept in result.concepts)
+end
+
+"""
+    dependent_sources_for_slugs(concept_map, slugs; excluding=Set(), deleted_files=Set()) -> Vector{String}
+
+Return sources from the existing state that own any of `slugs`, excluding files
+already processed (or scheduled) and files deleted in the current compile.
+"""
+function dependent_sources_for_slugs(concept_map::Dict{String,Vector{String}},
+                                     slugs;
+                                     excluding::AbstractSet{String}=Set{String}(),
+                                     deleted_files::AbstractSet{String}=Set{String}())::Vector{String}
+    affected = String[]
+    seen = Set{String}()
+
+    for slug in slugs
+        for file in get(concept_map, slug, String[])
+            if file in excluding || file in deleted_files || file in seen
+                continue
+            end
+            push!(affected, file)
+            push!(seen, file)
+        end
+    end
+
+    affected
+end
+
+"""
+    surviving_sources_for_slug(concept_map, slug; excluding=Set(), deleted_files=Set()) -> Vector{String}
+
+Return the existing-state owners of `slug` that are still expected to survive
+the current compile.
+"""
+function surviving_sources_for_slug(concept_map::Dict{String,Vector{String}},
+                                    slug::String;
+                                    excluding::AbstractSet{String}=Set{String}(),
+                                    deleted_files::AbstractSet{String}=Set{String}())::Vector{String}
+    dependent_sources_for_slugs(
+        concept_map,
+        (slug,);
+        excluding=excluding,
+        deleted_files=deleted_files,
+    )
+end
+
+"""
+    enqueue_sources!(queue, queued, attempted, candidates) -> Int
+
+Append unseen candidate sources to the extraction work queue.
+"""
+function enqueue_sources!(queue::Vector{String},
+                          queued::Set{String},
+                          attempted::Set{String},
+                          candidates)::Int
+    added = 0
+    for file in candidates
+        if file in queued || file in attempted
+            continue
+        end
+        push!(queue, file)
+        push!(queued, file)
+        added += 1
+    end
+    added
+end
+
+"""
     find_shared_concepts(source_file::String, state::WikiState) -> Set{String}
 
 Find concept slugs from `source_file` that are also produced by at least one
@@ -91,27 +165,15 @@ function find_affected_sources(state::WikiState, direct_changes::Vector{SourceCh
         end
     end
 
-    # Find unchanged sources that share those slugs
-    affected = Set{String}()
-    for slug in changed_slugs
-        for file in get(concept_map, slug, String[])
-            if file ∉ changed_files
-                push!(affected, file)
-            end
-        end
-    end
-
-    collect(affected)
+    dependent_sources_for_slugs(concept_map, changed_slugs; excluding=changed_files)
 end
 
 """
     find_frozen_slugs(state::WikiState, changes::Vector{SourceChange}) -> Set{String}
 
-Find concept slugs that must NOT be regenerated because they are shared
-between a deleted source and at least one surviving source.
-
-These pages should be left as-is rather than orphaned or regenerated with
-incomplete data.
+Legacy helper: find concept slugs touched by deleted sources that still have at
+least one surviving owner in the previous state.  These slugs should be
+re-generated from surviving owners, not skipped.
 """
 function find_frozen_slugs(state::WikiState, changes::Vector{SourceChange})::Set{String}
     deleted_files = Set{String}()
@@ -181,17 +243,6 @@ function find_late_affected_sources(extractions::Vector{ExtractionResult},
 
     isempty(new_slugs) && return String[]
 
-    # Check unchanged sources in state for overlap
     concept_map = build_concept_to_sources_map(state.sources)
-    late_affected = Set{String}()
-
-    for slug in new_slugs
-        for file in get(concept_map, slug, String[])
-            if file ∉ processed_files
-                push!(late_affected, file)
-            end
-        end
-    end
-
-    collect(late_affected)
+    dependent_sources_for_slugs(concept_map, new_slugs; excluding=processed_files)
 end

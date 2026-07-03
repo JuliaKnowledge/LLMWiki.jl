@@ -8,7 +8,6 @@ using Markdown: Markdown
 using FileWatching
 using JSON3
 using HTTP
-using Requires
 using YAML
 using Gumbo
 using Cascadia
@@ -171,12 +170,5 @@ Return statistics about the wiki RDF knowledge graph.
 Requires `using LLMWiki, RDFLib`.
 """
 function rdf_graph_stats end
-
-function __init__()
-    @require AgentFramework="8d84e483-4b84-4e3c-9ca2-3749d621083b" include("../ext/LLMWikiAgentFrameworkExt.jl")
-    @require RDFLib="a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a" include("../ext/LLMWikiRDFLibExt.jl")
-    @require SQLite="0aa819cd-b072-5ff4-a722-6bc24af294d9" include("../ext/LLMWikiSQLiteExt.jl")
-    @require Mem0="111c52c1-a189-4018-bb23-b883ef531b41" include("../ext/LLMWikiMem0Ext.jl")
-end
 
 end # module

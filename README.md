@@ -172,8 +172,8 @@ Sources (immutable)          Wiki (LLM-generated)         Schema
                      └──────────────────────────┘
 ```
 
-**Compilation pipeline** (12 steps):
-1. Acquire lock → 2. Load state → 3. SHA-256 change detection → 4. Find affected sources (shared concepts) → 5. Phase 1: Extract concepts → 6. Find late-affected sources → 7. Merge extractions → 8. Phase 2: Generate pages → 9. Handle deletions → 10. Resolve wikilinks → 11. Regenerate index → 12. Save state
+**Compilation pipeline** (fixed-point incremental):
+1. Acquire lock → 2. Load state → 3. SHA-256 change detection → 4. Queue changed sources plus surviving owners of deleted/removed slugs → 5. Re-extract until dependency propagation reaches a fixed point → 6. Merge extractions → 7. Generate pages → 8. Orphan only last-owner slugs → 9. Resolve wikilinks → 10. Regenerate index → 11. Save state
 
 ## Extensions
 

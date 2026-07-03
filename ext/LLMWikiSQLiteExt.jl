@@ -3,10 +3,7 @@ module LLMWikiSQLiteExt
 using LLMWiki
 using LLMWiki: JSON3
 using DBInterface
-
-const SQLite = Base.root_module(
-    Base.PkgId(Base.UUID("0aa819cd-b072-5ff4-a722-6bc24af294d9"), "SQLite"),
-)
+using SQLite
 
 """
 SQLite-backed state storage for LLMWiki.jl.

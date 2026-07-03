@@ -2,6 +2,64 @@
 # watch.jl — File watcher for LLMWiki.jl auto-recompilation
 # ──────────────────────────────────────────────────────────────────────────────
 
+_is_relevant_watch_event(fname::String) = !(startswith(basename(fname), ".") || endswith(fname, ".tmp"))
+
+function _collect_watch_batch(sources_path::String,
+                              debounce_seconds::Float64;
+                              watch_fn::Function=watch_folder,
+                              time_fn::Function=time,
+                              pending::Bool=false,
+                              last_event_at::Float64=0.0)
+    files = String[]
+    latest_event_at = last_event_at
+
+    if !pending
+        while true
+            fname, events = watch_fn(sources_path)
+            getproperty(events, :timedout) && continue
+            _is_relevant_watch_event(fname) || continue
+            @info "Change detected" file=fname
+            push!(files, fname)
+            latest_event_at = time_fn()
+            break
+        end
+    end
+
+    while true
+        remaining = debounce_seconds - (time_fn() - latest_event_at)
+        remaining <= 0 && return (files=files, last_event_at=latest_event_at)
+
+        fname, events = watch_fn(sources_path, remaining)
+        if getproperty(events, :timedout)
+            return (files=files, last_event_at=latest_event_at)
+        end
+        _is_relevant_watch_event(fname) || continue
+
+        @info "Change detected" file=fname
+        push!(files, fname)
+        latest_event_at = time_fn()
+    end
+end
+
+function _drain_watch_events(sources_path::String;
+                             watch_fn::Function=watch_folder,
+                             time_fn::Function=time)
+    files = String[]
+    latest_event_at = 0.0
+
+    while true
+        fname, events = watch_fn(sources_path, 0.0)
+        if getproperty(events, :timedout)
+            return (files=files, last_event_at=latest_event_at)
+        end
+        _is_relevant_watch_event(fname) || continue
+
+        @info "Change detected during compile" file=fname
+        push!(files, fname)
+        latest_event_at = time_fn()
+    end
+end
+
 """
     watch_wiki(config::WikiConfig;
                callback::Union{Nothing,Function}=nothing,
@@ -9,21 +67,15 @@
 
 Watch the sources directory for changes and auto-recompile the wiki.
 
-Uses `FileWatching.watch_folder()` to receive filesystem events.  Changes
-are debounced so rapid successive edits trigger only one compilation.
+Uses `FileWatching.watch_folder()` to receive filesystem events. Changes are
+debounced from the last observed event (not the last compile start/end), and if
+more events arrive during a compile the watcher immediately schedules one more
+debounced pass before blocking again.
 
-If `callback` is provided, it is called after each successful compilation
-with the result `NamedTuple` from `compile!`.
+If `callback` is provided, it is called after each successful compilation with
+the result `NamedTuple` from `compile!`.
 
 Blocks until interrupted (Ctrl-C / `InterruptException`).
-
-# Example
-```julia
-config = load_config("./my-wiki")
-watch_wiki(config) do result
-    println("Compiled \$(result.compiled) pages")
-end
-```
 """
 function watch_wiki(config::WikiConfig;
                     callback::Union{Nothing,Function}=nothing,
@@ -36,34 +88,21 @@ function watch_wiki(config::WikiConfig;
     @info "Watching for changes" sources=sources_path debounce=debounce_seconds
     @info "Press Ctrl-C to stop"
 
-    last_compile = 0.0
+    pending = false
+    pending_event_at = 0.0
 
     try
         while true
-            # Block until a filesystem event occurs
-            result = watch_folder(sources_path)
-            fname = result[1]
-            events = result[2]
+            batch = _collect_watch_batch(
+                sources_path,
+                debounce_seconds;
+                pending=pending,
+                last_event_at=pending_event_at,
+            )
 
-            # Skip hidden/temp files
-            if startswith(basename(fname), ".") || endswith(fname, ".tmp")
-                continue
-            end
+            pending = false
+            pending_event_at = 0.0
 
-            @info "Change detected" file=fname
-
-            # Debounce: skip if we compiled very recently
-            now_time = time()
-            if (now_time - last_compile) < debounce_seconds
-                @debug "Debounced" elapsed=(now_time - last_compile)
-                continue
-            end
-
-            # Small delay to let rapid edits settle
-            sleep(debounce_seconds)
-            last_compile = time()
-
-            # Run compilation
             try
                 result = compile!(config)
                 @info "Auto-compile complete" compiled=result.compiled skipped=result.skipped deleted=result.deleted
@@ -77,12 +116,23 @@ function watch_wiki(config::WikiConfig;
             catch compile_err
                 @error "Auto-compilation failed" exception=(compile_err, catch_backtrace())
             end
+
+            drained = _drain_watch_events(sources_path)
+            if !isempty(drained.files)
+                pending = true
+                pending_event_at = drained.last_event_at
+            end
         end
     catch e
         if e isa InterruptException
             @info "File watcher stopped"
         else
             rethrow(e)
+        end
+    finally
+        try
+            unwatch_folder(sources_path)
+        catch
         end
     end
 

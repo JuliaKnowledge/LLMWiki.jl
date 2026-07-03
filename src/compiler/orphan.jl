@@ -20,16 +20,31 @@ function mark_orphaned!(config::WikiConfig, source_file::String, state::WikiStat
 
     for slug in entry.concepts
         slug in shared && continue
-        page_path = joinpath(config.root, config.concepts_dir, "$slug.md")
-        content = safe_read(page_path)
-        content === nothing && continue
-
-        meta, body = parse_frontmatter(content)
-        meta.orphaned = true
-        meta.updated_at = Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
-        atomic_write(page_path, build_page(meta, body))
-        @info "Orphaned page" slug=slug reason="source deleted: $source_file"
+        mark_slug_orphaned!(config, slug; reason="source deleted: $source_file")
     end
+end
+
+"""
+    mark_slug_orphaned!(config::WikiConfig, slug::String; reason::String="") -> Bool
+
+Mark a single concept page as orphaned. Returns `true` even when the page file
+does not exist so callers can treat already-missing pages as resolved.
+"""
+function mark_slug_orphaned!(config::WikiConfig, slug::String; reason::String="")::Bool
+    page_path = joinpath(config.root, config.concepts_dir, "$slug.md")
+    content = safe_read(page_path)
+    content === nothing && return true
+
+    meta, body = parse_frontmatter(content)
+    if meta.orphaned
+        return true
+    end
+
+    meta.orphaned = true
+    meta.updated_at = Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
+    atomic_write(page_path, build_page(meta, body))
+    @info "Orphaned page" slug=slug reason=reason
+    true
 end
 
 """

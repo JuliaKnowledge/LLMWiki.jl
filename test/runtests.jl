@@ -15,4 +15,5 @@ using LLMWiki
     include("test_log.jl")
     include("test_versioning.jl")
     include("test_rdflib_ext.jl")
+    include("test_compiler_pipeline.jl")
 end

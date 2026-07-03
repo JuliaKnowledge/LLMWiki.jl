@@ -1,10 +1,7 @@
 module LLMWikiMem0Ext
 
 using LLMWiki
-
-const Mem0 = Base.root_module(
-    Base.PkgId(Base.UUID("111c52c1-a189-4018-bb23-b883ef531b41"), "Mem0"),
-)
+using Mem0
 
 """
     LLMWiki.semantic_search(config::LLMWiki.WikiConfig, query::String; top_k::Int=10) -> Vector{LLMWiki.SearchResult}

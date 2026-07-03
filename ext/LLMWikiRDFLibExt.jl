@@ -4,10 +4,8 @@ using LLMWiki
 using LLMWiki: JSON3, Dates, slugify, parse_frontmatter, find_wikilinks,
                WikiConfig, WikiState, PageMeta, PageType, CONCEPT, ENTITY,
                QUERY_PAGE, OVERVIEW, SearchResult, resolve_paths!
+using RDFLib
 
-const RDFLib = Base.root_module(
-    Base.PkgId(Base.UUID("a0e68e5a-3a1c-4e72-9e58-7b3f0e842d1a"), "RDFLib"),
-)
 const Namespace = RDFLib.Namespace
 const RDFGraph = RDFLib.RDFGraph
 const SKOS = RDFLib.SKOS

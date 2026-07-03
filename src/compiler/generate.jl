@@ -3,10 +3,11 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 """
-    generate_page(config::WikiConfig, entry::MergedConcept) -> String
+    generate_page(config::WikiConfig, entry::MergedConcept) -> Union{Nothing,String}
 
 Generate (or update) a wiki page for a merged concept using the LLM.
-Returns the slug of the generated page.
+Returns the slug of the generated page, or `nothing` when validation fails and
+no write occurs.
 """
 function generate_page(config::WikiConfig, entry::MergedConcept)
     page_path     = joinpath(config.root, config.concepts_dir, "$(entry.slug).md")
@@ -45,15 +46,20 @@ function generate_page(config::WikiConfig, entry::MergedConcept)
     )
 
     full_page = build_page(meta, body)
+    _persist_generated_page!(page_path, full_page, entry)
+end
 
-    if validate_wiki_page(full_page)
-        atomic_write(page_path, full_page)
-        @info "Generated page" concept=entry.concept.concept slug=entry.slug
-    else
-        @warn "Invalid page generated, skipping" concept=entry.concept.concept
+function _persist_generated_page!(page_path::String,
+                                  full_page::String,
+                                  entry::MergedConcept)::Union{Nothing,String}
+    if !validate_wiki_page(full_page)
+        @warn "Invalid page generated, skipping" concept=entry.concept.concept slug=entry.slug
+        return nothing
     end
 
-    return entry.slug
+    atomic_write(page_path, full_page)
+    @info "Generated page" concept=entry.concept.concept slug=entry.slug
+    entry.slug
 end
 
 # ── Related page loading ─────────────────────────────────────────────────────

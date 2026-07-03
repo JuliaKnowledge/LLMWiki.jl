@@ -1,10 +1,7 @@
 module LLMWikiAgentFrameworkExt
 
 using LLMWiki
-
-const AgentFramework = Base.root_module(
-    Base.PkgId(Base.UUID("8d84e483-4b84-4e3c-9ca2-3749d621083b"), "AgentFramework"),
-)
+using AgentFramework
 
 const _WIKI_AGENT_INSTRUCTIONS = """
 You are a wiki maintainer agent for LLMWiki. You manage a knowledge wiki
